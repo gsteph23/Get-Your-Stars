@@ -1,1155 +1,146 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#faf7ed">
-  <title>Pumpkin! · Your little pumpkin patch</title>
-  <style>
-    @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Patrick+Hand&display=swap");
-    :root {
-      --paper: #faf7ed;
-      --ink: #694e3e;
-      --muted: #856f5b;
-      --sage: #d5e2b9;
-      --green: #4f6a42;
-      --peach: #f9e7cd;
-      --line: #ece4cf;
-      --display: "Patrick Hand","Trebuchet MS",cursive;
-      --body: "Nunito","Trebuchet MS",sans-serif;
-    }
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--paper);
-      color: var(--ink);
-      font-family: var(--body);
-      font-weight: 700;
-    }
-
-    button {
-      font: inherit;
-      color: inherit;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
-    button:focus-visible, a:focus-visible {
-      outline: 3px solid #64875a;
-      outline-offset: 4px;
-    }
-
-    button:disabled {
-      cursor: default;
-      opacity: 0.6;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
-    .game {
-      display: grid;
-      grid-template-columns: minmax(0,1fr) minmax(380px,38%);
-      height: 100dvh;
-      min-height: 0;
-    }
-
-    .patch {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 0;
-      min-height: 0;
-      padding: 24px 32px 28px;
-      isolation: isolate;
-      background: #f6f4dc;
-    }
-
-    .patch::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      background: radial-gradient(circle at 50% 30%, #fefcf0 0%, #eef3de 100%);
-      opacity: .9;
-    }
-
-    .patch-header {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      font: 700 clamp(32px,3.6vw,54px)/1 var(--display);
-      margin: 0;
-      letter-spacing: -1px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .brand-leaf {
-      width: 24px;
-      height: 24px;
-      fill: var(--green);
-      vertical-align: baseline;
-    }
-
-    .icon-button {
-      display: grid;
-      place-items: center;
-      width: 48px;
-      height: 48px;
-      border: 3px solid #dbe4bf;
-      border-radius: 50%;
-      background: #fffcf0;
-      color: var(--green);
-      font-size: 29px;
-      box-shadow: 0 3px 0 #cad5ac66;
-    }
-
-    .score {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 8px;
-      border-radius: 32px;
-      background: #fffcf0ed;
-      padding: 4px 26px;
-      box-shadow: 0 5px 18px #a9936620;
-      font: 900 clamp(38px,4.9vw,72px)/1.3 var(--body);
-      font-variant-numeric: tabular-nums;
-      max-width: 100%;
-      white-space: nowrap;
-    }
-
-    .score svg {
-      width: 45px;
-      height: 45px;
-      align-self: center;
-    }
-
-    .unit {
-      font-size: .5em;
-    }
-
-    .growth {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .growth-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #fffcf0ed;
-      border-radius: 30px;
-      padding: 9px 16px;
-      font-size: clamp(12px,1.2vw,17px);
-      white-space: nowrap;
-      box-shadow: 0 3px 10px #a9936612;
-    }
-
-    .growth-pill svg {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-
-    .pumpkin-stage {
-      position: relative;
-      display: flex;
-      flex: 1;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      width: 100%;
-      min-height: 0;
-      padding-bottom: 18px;
-    }
-
-    .pumpkin-button {
-      position: relative;
-      width: min(100%,660px);
-      flex: 1;
-      min-height: 0;
-      border: 0;
-      background: none;
-      padding: 0;
-      user-select: none;
-      transition: transform .14s;
-      z-index: 1;
-    }
-
-    .pumpkin-button:hover {
-      transform: rotate(-1.5deg);
-    }
-
-    .pumpkin-button:active {
-      transform: scale(.94);
-    }
-
-    .pumpkin-svg-container {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      pointer-events: none;
-    }
-
-    .pumpkin-svg-container svg {
-      transform: scale(var(--pumpkin-scale, 0.6));
-      transform-origin: 50% 80%;
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 12px 8px #ab8f6425);
-    }
-
-    .tap-hint {
-      flex-shrink: 0;
-      font: 700 25px/1.25 var(--display);
-      border: 2px solid #dce5be;
-      background: #fffcf0ee;
-      padding: 8px 25px;
-      border-radius: 25px;
-      box-shadow: 0 4px 10px #9a9e6230;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .milestone {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 18px;
-      border: 2px solid #f1e9d4;
-      border-radius: 26px;
-      background: #fffcf2f2;
-      box-shadow: 0 4px 15px #a9936610;
-      width: 100%;
-      flex-shrink: 0;
-    }
-
-    .patch-milestone {
-      max-width: 760px;
-    }
-
-    .medal {
-      width: 70px;
-      height: 70px;
-      flex-shrink: 0;
-    }
-
-    .milestone-copy {
-      flex: 1;
-      min-width: 0;
-      text-align: left;
-    }
-
-    .milestone strong {
-      display: block;
-      font: 700 32px/1.1 var(--display);
-    }
-
-    .milestone small {
-      display: block;
-      font-size: 10px;
-      margin-bottom: 4px;
-      letter-spacing: .8px;
-    }
-
-    .milestone [data-next-label] {
-      display: block;
-      font-size: 13px;
-      line-height: 1.35;
-      margin: 4px 0 9px;
-    }
-
-    .progress {
-      height: 14px;
-      background: #eee3cb;
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .progress > div {
-      height: 100%;
-      background: linear-gradient(90deg,#91b17f,#b8ce9b);
-      border-radius: inherit;
-      transition: width .3s;
-    }
-
-    aside {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      min-width: 0;
-      padding: 24px;
-      background: var(--paper);
-      border-left: 4px solid #dbe3c2;
-      overflow: hidden;
-    }
-
-    .sheet-header {
-      flex-shrink: 0;
-    }
-
-    .tabs {
-      display: grid;
-      grid-template-columns: repeat(2,minmax(0,1fr));
-      gap: 10px;
-    }
-
-    .tabs button {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      min-height: 62px;
-      border: 2px solid var(--line);
-      background: #fffcf2;
-      border-radius: 22px;
-      font: 700 clamp(17px,1.65vw,25px)/1.2 var(--display);
-      padding: 10px 6px;
-      white-space: nowrap;
-    }
-
-    .tabs .active {
-      background: var(--sage);
-      border-color: var(--sage);
-    }
-
-    .tabs span {
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      min-width: 26px;
-      height: 26px;
-      padding: 0 5px;
-      background: #eee2c7;
-      font: 800 14px var(--body);
-    }
-
-    .tabs .active span {
-      background: #5c8053;
-      color: #fff;
-    }
-
-    .back-to-pumpkin {
-      display: none;
-    }
-
-    .sheet-content {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      padding: 0 2px 10px;
-      scrollbar-width: thin;
-      scrollbar-color: #cdd8b3 transparent;
-    }
-
-    .tip {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      margin: 16px 0 12px;
-      padding: 14px 16px;
-      border-radius: 22px;
-      background: var(--peach);
-    }
-
-    .tip svg {
-      width: 45px;
-      height: 45px;
-      flex-shrink: 0;
-    }
-
-    .tip p {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .tip b {
-      font: 700 24px/1.3 var(--display);
-    }
-
-    .wallet {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f7edd5;
-      border-radius: 20px;
-      padding: 10px 16px;
-      margin-bottom: 12px;
-      font-size: 13px;
-      gap: 8px;
-    }
-
-    .wallet strong {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font: 900 30px var(--body);
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-
-    .wallet svg {
-      width: 30px;
-      height: 30px;
-    }
-
-    .upgrade {
-      display: flex;
-      width: 100%;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 10px;
-      margin-bottom: 9px;
-      border: 2px solid var(--line);
-      border-radius: 22px;
-      background: #fffcf280;
-      text-align: left;
-      transition: background .15s,transform .15s;
-      min-height: 97px;
-    }
-
-    .upgrade:hover:not(:disabled) {
-      background: #f0f3e3;
-      transform: translateY(-2px);
-    }
-
-    .upgrade:active:not(:disabled) {
-      transform: translateY(1px);
-    }
-
-    .upgrade-icon-wrap {
-      width: 60px;
-      height: 60px;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-      background: #f4ecdc;
-      border-radius: 16px;
-    }
-
-    .upgrade-icon-wrap svg {
-      width: 38px;
-      height: 38px;
-    }
-
-    .upgrade-copy {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .upgrade-name {
-      display: block;
-      font: 700 clamp(17px,1.65vw,24px)/1.1 var(--display);
-    }
-
-    .owned {
-      display: block;
-      font: 700 12px var(--body);
-      margin-top: 4px;
-    }
-
-    .upgrade-desc {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .price {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      align-self: center;
-      flex-shrink: 0;
-      padding: 12px 10px;
-      border-radius: 18px;
-      background: var(--sage);
-      color: #3f6036;
-      min-height: 46px;
-      font: 800 13px var(--body);
-    }
-
-    .price svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .upgrade:disabled .price {
-      background: #eee1cd;
-      color: #806b56;
-    }
-
-    h2 {
-      font: 700 30px/1.2 var(--display);
-      text-align: center;
-      margin: 22px 0 16px;
-    }
-
-    dl {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 13px 12px;
-      margin: 0 0 16px;
-      padding: 18px;
-      border: 2px solid var(--line);
-      border-radius: 22px;
-      background: #fffcf280;
-      font-size: 14px;
-    }
-
-    dd {
-      margin: 0;
-      text-align: right;
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .badges {
-      display: grid;
-      grid-template-columns: repeat(2,minmax(0,1fr));
-      gap: 12px;
-      margin: 18px 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .badge {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 3px;
-      padding: 8px 6px;
-      color: var(--muted);
-      background: #fffcf255;
-      border: 2px solid var(--line);
-      border-radius: 22px;
-    }
-
-    .badge svg {
-      width: 64px;
-      height: 64px;
-      filter: grayscale(.8);
-      opacity: .5;
-    }
-
-    .badge strong {
-      font: 700 20px/1.1 var(--display);
-      margin-top: 4px;
-    }
-
-    .badge small {
-      font-size: 11px;
-    }
-
-    .badge-status {
-      font-size: 11px;
-      padding: 3px 14px;
-      background: #ebe1d0;
-      border-radius: 20px;
-      min-width: 90px;
-      margin-top: 4px;
-    }
-
-    .badge.earned {
-      color: var(--ink);
-      border-color: var(--sage);
-      background: #fffcf8;
-    }
-
-    .badge.earned svg {
-      filter: none;
-      opacity: 1;
-    }
-
-    .badge.earned .badge-status {
-      background: var(--sage);
-      color: #3f6036;
-    }
-
-    .harvest-actions {
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .reset {
-      border: 0;
-      border-radius: 22px;
-      background: var(--sage);
-      min-height: 46px;
-      padding: 10px 22px;
-      font: 700 23px var(--display);
-      width: 100%;
-      color: #3f6036;
-    }
-
-    .floater {
-      position: absolute;
-      pointer-events: none;
-      color: #805a37;
-      font: 900 26px var(--body);
-      z-index: 5;
-      background: #fff9e9d9;
-      border-radius: 20px;
-      padding: 2px 9px;
-      animation: float 1s forwards;
-    }
-
-    @keyframes float {
-      to {
-        transform: translateY(-90px) rotate(8deg);
-        opacity: 0;
-      }
-    }
-
-    @media(max-width:800px) {
-      body {
-        overflow: hidden;
-      }
-      .game {
-        grid-template-columns: 1fr;
-      }
-      .patch {
-        height: 100dvh;
-        padding: 16px 18px calc(112px + env(safe-area-inset-bottom));
-        padding-top: max(16px,env(safe-area-inset-top));
-      }
-      aside {
-        position: fixed;
-        inset: 0;
-        z-index: 10;
-        border: 0;
-        border-radius: 24px 24px 0 0;
-        padding: 0;
-        box-shadow: 0 -3px 18px #ad9e7020;
-        transform: translateY(calc(100% - 96px - env(safe-area-inset-bottom)));
-        transition: transform .3s ease;
-      }
-      .sheet-header {
-        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-        background: var(--paper);
-      }
-      aside:not(.sheet-open) .sheet-content {
-        visibility: hidden;
-      }
-      aside.sheet-open {
-        transform: translateY(0);
-        border-radius: 0;
-      }
-      .sheet-open .sheet-header {
-        padding-top: max(16px,env(safe-area-inset-top));
-        padding-bottom: 8px;
-      }
-      .sheet-open .back-to-pumpkin {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        min-height: 44px;
-        margin: 0 auto 16px;
-        padding: 7px 23px;
-        border: 0;
-        background: #f7edd5;
-        border-radius: 24px;
-        font: 700 23px var(--display);
-      }
-      .sheet-content {
-        padding: 0 16px calc(24px + env(safe-area-inset-bottom));
-      }
-    }
-
-    button:focus:not(:focus-visible) {
-      outline: none;
-    }
-  </style>
-</head>
-<body>
-
-<main class="game">
-  <section class="patch" aria-label="Your pumpkin patch">
-    <header class="patch-header">
-      <h1>
-        Pumpkin!
-        <svg class="brand-leaf" viewBox="0 0 24 24"><path d="M17.5 3C12.5 3 7 7.5 5.5 12.5C4 17.5 7 21 7 21C7 21 10.5 18 15.5 16.5C20.5 15 21 9.5 21 9.5C21 9.5 22.5 3 17.5 3Z"/></svg>
-      </h1>
-      <button id="sound" class="icon-button" aria-label="Enable sound" aria-pressed="false" title="Toggle sound">♪</button>
-    </header>
-
-    <div class="score">
-      <svg viewBox="0 0 32 32"><path d="M4 16C4 9.37258 9.37258 4 16 4C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28C9.37258 28 4 22.6274 4 16Z" fill="#f4a261" stroke="#694e3e" stroke-width="2"/><path d="M16 16L28 16C28 22.6274 22.6274 28 16 28V16Z" fill="#e76f51"/></svg>
-      <span id="weight">0</span><span class="unit">lbs</span>
-    </div>
-
-    <div class="growth">
-      <span class="growth-pill">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><path d="M5 22H19M12 2V6M10 2H14M7 6H17C18.1046 6 19 6.89543 19 8V18C19 19.1046 18.1046 20 17 20H7C5.89543 20 5 19.1046 5 18V8C5 6.89543 5.89543 6 7 6Z"/></svg>
-        <b id="rate">0</b> lb / sec
-      </span>
-      <span class="growth-pill">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><path d="M12 2V12M12 12L9 9M12 12L15 9M19 13V17C19 19.2091 17.2091 21 15 21H9C6.79086 21 5 19.2091 5 17V13"/></svg>
-        <span id="tap-value">0.1 lb / tap</span>
-      </span>
-    </div>
-
-    <div class="pumpkin-stage" id="stage">
-      <button id="grow" aria-label="Grow pumpkin" class="pumpkin-button">
-        <div class="pumpkin-svg-container" style="--pumpkin-scale: 0.6;">
-          <svg viewBox="0 0 220 180" width="220" height="180">
-            <ellipse cx="110" cy="155" rx="55" ry="12" fill="#d0bc90" opacity="0.4"/>
-            <path d="M110 30C75 30 45 55 45 100C45 145 75 160 110 160C145 160 175 145 175 100C175 55 145 30 110 30Z" fill="#f4a261" stroke="#694e3e" stroke-width="4" stroke-linejoin="round"/>
-            <path d="M110 35C85 35 60 58 60 100C60 142 85 155 110 155C135 155 160 142 160 100C160 58 135 35 110 35Z" fill="#f8b375" stroke="#694e3e" stroke-width="3" opacity="0.8"/>
-            <path d="M110 40C92 40 75 60 75 100C75 140 92 150 110 150C128 150 145 140 145 100C145 60 128 40 110 40Z" fill="#fbca9a" stroke="#694e3e" stroke-width="2" opacity="0.6"/>
-            <path d="M104 35C104 22 108 14 116 10C118 16 114 26 112 35Z" fill="#4f6a42" stroke="#694e3e" stroke-width="3" stroke-linejoin="round"/>
-            <circle cx="92" cy="95" r="7" fill="#694e3e"/>
-            <circle cx="128" cy="95" r="7" fill="#694e3e"/>
-            <path d="M100 115C105 123 115 123 120 115" stroke="#694e3e" stroke-width="4" stroke-linecap="round" fill="none"/>
-          </svg>
-        </div>
-      </button>
-      <span class="tap-hint" aria-hidden="true">Tap the pumpkin to watch it grow!</span>
-    </div>
-
-    <div class="milestone patch-milestone">
-      <div class="medal" id="patch-medal-icon">
-        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#f9e7cd" stroke="#694e3e" stroke-width="3"/><path d="M20 48L32 58L44 48" fill="#d5e2b9" stroke="#694e3e" stroke-width="3"/></svg>
-      </div>
-      <div class="milestone-copy">
-        <strong data-category>Mini</strong>
-        <span data-next-label>Next: Carving at 10 lbs</span>
-        <div class="progress" role="progressbar" aria-label="Next pumpkin milestone" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div data-progress></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <aside aria-label="Pumpkin helpers and harvest">
-    <div class="sheet-header">
-      <button id="back-to-pumpkin" class="back-to-pumpkin"><span aria-hidden="true">←</span> Back to pumpkin</button>
-      <div class="tabs" role="tablist" aria-label="Explore your patch">
-        <button id="shop-tab" class="active" role="tab" aria-controls="shop" aria-selected="true" data-tab="shop">Helpers Added <span id="helper-count" title="Affordable helper options">0</span></button>
-        <button id="stats-tab" role="tab" aria-controls="stats" aria-selected="false" data-tab="stats">Your Harvest <span id="badge-count" title="Badges earned">0</span></button>
-      </div>
-    </div>
-
-    <div class="sheet-content">
-      <div id="shop" role="tabpanel" aria-labelledby="shop-tab">
-        <div class="tip">
-          <svg viewBox="0 0 32 32"><path d="M4 16C4 9.37258 9.37258 4 16 4C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28C9.37258 28 4 22.6274 4 16Z" fill="#f4a261" stroke="#694e3e" stroke-width="2"/></svg>
-          <p><b>1 slice = 1 lb</b><br>Helpers cost pumpkin weight.</p>
-        </div>
-        <div class="wallet">
-          YOUR SLICES 
-          <strong>
-            <svg viewBox="0 0 32 32"><path d="M4 16C4 9.37258 9.37258 4 16 4C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28C9.37258 28 4 22.6274 4 16Z" fill="#f4a261" stroke="#694e3e" stroke-width="2"/></svg>
-            <span id="slices">0</span>
-          </strong>
-        </div>
-        <div id="upgrades"></div>
-      </div>
-
-      <div id="stats" role="tabpanel" aria-labelledby="stats-tab" hidden>
-        <h2>A patch to be proud of.</h2>
-        <dl>
-          <dt>Total taps</dt><dd id="total-taps">0</dd>
-          <dt>Total slices grown</dt><dd id="total-slices">0</dd>
-          <dt>Helpers hired</dt><dd id="helpers">0</dd>
-        </dl>
-        <div class="milestone">
-          <div class="medal" id="stats-medal-icon">
-            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#f9e7cd" stroke="#694e3e" stroke-width="3"/><path d="M20 48L32 58L44 48" fill="#d5e2b9" stroke="#694e3e" stroke-width="3"/></svg>
-          </div>
-          <div class="milestone-copy">
-            <small>YOUR PUMPKIN IS A</small>
-            <strong id="category" data-category>Mini</strong>
-            <span id="next-label" data-next-label>Next: Carving at 10 lbs</span>
-            <div class="progress" role="progressbar" aria-label="Next pumpkin milestone" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-              <div id="progress" data-progress></div>
-            </div>
-          </div>
-        </div>
-        <ul class="badges" id="badges" aria-label="Harvest badges"></ul>
-        <div class="harvest-actions">
-          <button id="reset" class="reset">Start a fresh patch</button>
-        </div>
-      </div>
-    </div>
-  </aside>
-</main>
-
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Star Chores</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fff8e7;--card:#fff;--ink:#2b2540;--mute:#7a7490;--line:#eadfc4;--acc:#f5a623;--ok:#d9f5df;--okink:#1d6b34;--bad:#e5484d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#1d1a2b;--card:#2a2640;--ink:#f3efff;--mute:#a49fbd;--line:#3d3860;--ok:#1f4a2c;--okink:#a8f0bb}}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+#app{max-width:980px;margin:0 auto;padding:14px}
+h1,h2,h3{margin:.3em 0}
+button{font:inherit;color:inherit;cursor:pointer;border:2px solid var(--line);background:var(--card);border-radius:16px;padding:10px 16px;min-height:48px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#2b2540;font-weight:700}
+button.dng{color:var(--bad);border-color:var(--bad)}
+input,select{font:inherit;color:inherit;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:8px 10px;min-height:44px;max-width:100%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.homegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:20px}
+.kidcard{border:4px solid var(--kc);border-radius:28px;padding:26px 10px;text-align:center;background:var(--card);min-height:260px}
+.kidcard .av{font-size:96px;line-height:1}.kidcard .nm{font-size:34px;font-weight:800}.kidcard .bal{font-size:30px;margin-top:6px}
+.bar{display:flex;align-items:center;gap:12px;background:var(--kc);color:#fff;border-radius:24px;padding:10px 18px;margin-bottom:14px}
+.bar .big{font-size:38px;font-weight:800;margin-left:auto}.bar .av{font-size:46px}.bar .nm{font-size:28px;font-weight:800}
+.bar button{min-height:44px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{position:relative;border:3px solid var(--line);border-radius:22px;background:var(--card);text-align:center;padding:12px 6px;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:4px}
+.tile .e{font-size:60px;line-height:1.05}.tile .t{font-weight:700;font-size:17px}.tile .s{font-size:19px}
+.tile:active{transform:scale(.96)}
+.tile.done{background:var(--ok);border-color:var(--okink);color:var(--okink);opacity:.85}
+.tile .chk{position:absolute;top:4px;right:8px;font-size:30px}
+.tile .cnt{position:absolute;top:6px;right:10px;background:var(--acc);color:#2b2540;border-radius:999px;font-weight:800;padding:0 10px}
+.goals{margin-top:20px}.goal{display:flex;align-items:center;gap:10px;margin:8px 0}
+.goal .p{flex:1;height:18px;background:var(--line);border-radius:99px;overflow:hidden}.goal .p i{display:block;height:100%;background:var(--acc)}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:14px;margin-bottom:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tabs button.on{background:var(--acc);border-color:var(--acc);color:#2b2540;font-weight:700}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.row input[type=number]{width:84px}.row .em{width:64px;text-align:center;font-size:24px}.row .nm{flex:1;min-width:150px}
+.hist{font-size:15px;border-top:1px solid var(--line);padding:6px 0;display:flex;gap:8px;align-items:center}.hist span:nth-child(2){flex:1}
+.mute{color:var(--mute);font-size:15px}.plus{color:var(--okink)}.minus{color:var(--bad)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:20}
+.modal .box{background:var(--card);border-radius:22px;padding:22px;max-width:340px;width:100%;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#2b2540;color:#fff;padding:12px 22px;border-radius:99px;font-size:22px;z-index:30}
+.fly{position:fixed;font-size:44px;pointer-events:none;z-index:40;animation:fly 1s ease-out forwards}
+@keyframes fly{to{transform:translateY(-160px) scale(1.6);opacity:0}}
+textarea{width:100%;min-height:90px;font:13px monospace;background:var(--card);color:var(--ink);border:2px solid var(--line);border-radius:12px}
+</style></head><body><div id="app"></div>
 <script>
-  const SAVE_KEY = "pumpkin_game_save_v5";
+const KEY='starchores.v1';
+const DEF={kids:[{id:'k1',name:'My Stars',e:'🦊',c:'#3b82f6'}],
+chores:[
+['🐕','Feed the dog (morning)',1,'shared'],['🌙','Feed the dog (evening)',1,'shared'],['🍽️','Empty the dishwasher',2,'shared'],['🥣','Put dishes in dishwasher',1,'shared'],['💩','Pick up dog poops',10,'shared'],
+['🪥','Brush teeth (morning)',2,'each'],['🛏️','Brush teeth (evening)',2,'each'],['🧸','Tidy your room',3,'each'],['🧹','Clean the basement',5,'shared'],['🎒','Put lunch bag away',2,'each'],['📚','Read a book',1,'repeat'],['🧺','Help put laundry away',3,'shared'],['👟','Put shoes away',1,'each'], ['🍽️','Eat dinner',2,'each']
+].map((a,i)=>({id:'c'+i,e:a[0],n:a[1],s:a[2],t:a[3]})),
+rewards:[{id:'r1',e:'💵',n:'Cash',cost:25},{id:'r2',e:'🎬',n:'Movie night',cost:60},{id:'r3',e:'🎢',n:'Fun park trip',cost:150}],
+log:[],set:{pin:'1234',rate:10}};
+DEF.chores[6].e='🌛';
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.kids)S=JSON.parse(JSON.stringify(DEF));
+S.chores.forEach(c=>{if(c.t==='shared')c.t='each'});
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let ui={v:'home',k:null,tab:'pay',modal:null};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const kid=id=>S.kids.find(k=>k.id===id);
+const bal=k=>S.log.filter(l=>l.k===k).reduce((a,l)=>a+l.s,0);
+const stars=n=>n<=5?'⭐'.repeat(n):'⭐×'+n;
+const money=n=>'$'+(Math.round(n*100)/100).toFixed(2);
+const doneList=(c,k)=>S.log.filter(l=>l.d===today()&&l.c===c.id&&l.s>0&&(c.t==='shared'||l.k===k));
+function add(k,c,s,note){S.log.push({id:uid(),ts:Date.now(),d:today(),k,c:c?c.id:null,s,note:note||''});save()}
+function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1600)}
+function fly(x,y){const d=document.createElement('div');d.className='fly';d.textContent='⭐';d.style.left=x-22+'px';d.style.top=y-22+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1000)}
 
-  const MILESTONES = [
-    { name: "Mini", min: 0, max: 10, nextText: "Next: Carving at 10 lbs" },
-    { name: "Carving", min: 10, max: 50, nextText: "Next: Prize at 50 lbs" },
-    { name: "Prize", min: 50, max: 200, nextText: "Next: Giant at 200 lbs" },
-    { name: "Giant", min: 200, max: 750, nextText: "Next: Colossal at 750 lbs" },
-    { name: "Colossal", min: 750, max: 2000, nextText: "Next: Mythic at 2,000 lbs" },
-    { name: "Mythic", min: 2000, max: 5000, nextText: "Next: Legendary at 5,000 lbs" },
-    { name: "Legendary", min: 5000, max: 15000, nextText: "Next: Cosmic at 15,000 lbs" },
-    { name: "Cosmic", min: 15000, max: 50000, nextText: "Next: Universal at 50,000 lbs" },
-    { name: "Universal", min: 50000, max: Infinity, nextText: "You've grown a boundless pumpkin universe!" }
-  ];
-
-  const UPGRADES_DATA = [
-    { id: "water", name: "Watering Can", desc: "+0.2 lb/tap", cost: 15, costMult: 1.15, tapBoost: 0.2, rateBoost: 0, count: 0, svgType: "water" },
-    { id: "compost", name: "Rich Compost", desc: "+1 lb / sec", cost: 50, costMult: 1.20, tapBoost: 0, rateBoost: 1, count: 0, svgType: "compost" },
-    { id: "bees", name: "Friendly Bees", desc: "+5 lb / sec", cost: 250, costMult: 1.22, tapBoost: 0, rateBoost: 5, count: 0, svgType: "bee" },
-    { id: "scarecrow", name: "Friendly Scarecrow", desc: "+1.5 lb/tap, +12 lb/sec", cost: 1200, costMult: 1.25, tapBoost: 1.5, rateBoost: 12, count: 0, svgType: "scarecrow" },
-    { id: "greenhouse", name: "Mini Greenhouse", desc: "+60 lb / sec", cost: 6000, costMult: 1.28, tapBoost: 0, rateBoost: 60, count: 0, svgType: "greenhouse" }
-  ];
-
-  let gameState = {
-    weight: 0,
-    totalSlices: 0,
-    totalTaps: 0,
-    tapValue: 0.1,
-    rate: 0,
-    helpersCount: 0,
-    upgrades: {},
-    soundEnabled: false,
-    unlockedBadges: ["Mini"]
-  };
-
-  UPGRADES_DATA.forEach(u => {
-    gameState.upgrades[u.id] = 0;
-  });
-
-  const weightEl = document.getElementById("weight");
-  const slicesEl = document.getElementById("slices");
-  const helperCountEl = document.getElementById("helper-count");
-  const badgeCountEl = document.getElementById("badge-count");
-  const rateEl = document.getElementById("rate");
-  const tapValueEl = document.getElementById("tap-value");
-  const growBtn = document.getElementById("grow");
-  const stageEl = document.getElementById("stage");
-  const upgradesContainer = document.getElementById("upgrades");
-  const badgesContainer = document.getElementById("badges");
-  const resetBtn = document.getElementById("reset");
-  const soundBtn = document.getElementById("sound");
-  const asideEl = document.querySelector("aside");
-  const backBtn = document.getElementById("back-to-pumpkin");
-
-  const totalTapsEl = document.getElementById("total-taps");
-  const totalSlicesEl = document.getElementById("total-slices");
-  const helpersEl = document.getElementById("helpers");
-
-  const categoryEls = document.querySelectorAll("[data-category]");
-  const nextLabelEls = document.querySelectorAll("[data-next-label]");
-  const progressEls = document.querySelectorAll("[data-progress]");
-
-  function getUpgradeIconSvg(type) {
-    switch(type) {
-      case 'water':
-        return `<svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><path d="M2 13H5M18 5H6C4.89543 5 4 5.89543 4 7V17C4 18.1046 4.89543 19 6 19H18C19.1046 19 20 18.1046 20 17V7C20 5.89543 19.1046 5 18 5ZM7 5V3H13V5M16 12H12M14 10V14" stroke-linecap="round"/></svg>`;
-      case 'compost':
-        return `<svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><path d="M12 21V12M12 12C9 12 5 14 3 17V19H21V17C19 14 15 12 12 12ZM12 12C12 9 14 5 17 3M12 7C10 7 7 9 6 11"/></svg>`;
-      case 'bee':
-        return `<svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><ellipse cx="12" cy="12" rx="5" ry="4" fill="#f4a261"/><path d="M7 12H17M8 9V15M16 9V15M4 10L7 11M4 14L7 13"/></svg>`;
-      case 'scarecrow':
-        return `<svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><circle cx="12" cy="7" r="4" fill="#f9e7cd"/><path d="M6 14H18M12 11V21M9 4L12 2L15 4"/></svg>`;
-      case 'greenhouse':
-        return `<svg viewBox="0 0 24 24" fill="none" stroke="#694e3e" stroke-width="2"><path d="M4 21V10L12 3L20 10V21H4ZM9 21V14H15V21"/></svg>`;
-      default:
-        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#d5e2b9"/></svg>`;
-    }
-  }
-
-  function getBadgeSvg(name) {
-    return `<svg viewBox="0 0 64 64">
-      <circle cx="32" cy="32" r="26" fill="#fefcf0" stroke="#694e3e" stroke-width="3"/>
-      <circle cx="32" cy="32" r="20" fill="none" stroke="#d5e2b9" stroke-width="2" stroke-dasharray="4,2"/>
-      <path d="M22 46L32 54L42 46" fill="#d5e2b9" stroke="#694e3e" stroke-width="3" stroke-linejoin="round"/>
-      <text x="32" y="37" font-family="serif" font-size="12" font-weight="bold" fill="#694e3e" text-anchor="middle">${name[0]}</text>
-    </svg>`;
-  }
-
-  function saveGame() {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
-  }
-
-  function loadGame() {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        gameState = { ...gameState, ...parsed };
-        if (parsed.upgrades) {
-          UPGRADES_DATA.forEach(u => {
-            if (parsed.upgrades[u.id] !== undefined) {
-              u.count = parsed.upgrades[u.id];
-            }
-          });
-        }
-        recalculateStats();
-      } catch (e) {
-        console.error("Failed to load save data", e);
-      }
-    }
-  }
-
-  function recalculateStats() {
-    let baseTap = 0.1;
-    let baseRate = 0;
-    let totalHelpers = 0;
-
-    UPGRADES_DATA.forEach(u => {
-      baseTap += u.tapBoost * u.count;
-      baseRate += u.rateBoost * u.count;
-      totalHelpers += u.count;
-    });
-
-    gameState.tapValue = Number(baseTap.toFixed(1));
-    gameState.rate = Number(baseRate.toFixed(1));
-    gameState.helpersCount = totalHelpers;
-  }
-
-  function renderUpgrades() {
-    upgradesContainer.innerHTML = "";
-    UPGRADES_DATA.forEach(u => {
-      const currentCost = Math.floor(u.cost * Math.pow(u.costMult, u.count));
-      const canAfford = gameState.weight >= currentCost;
-
-      const button = document.createElement("button");
-      button.className = "upgrade";
-      button.disabled = !canAfford;
-
-      button.innerHTML = `
-        <div class="upgrade-icon-wrap">${getUpgradeIconSvg(u.svgType)}</div>
-        <span class="upgrade-copy">
-          <span class="upgrade-name">${u.name}</span>
-          <span class="owned">Owned: ${u.count}</span>
-          <span class="upgrade-desc">${u.desc}</span>
-        </span>
-        <span class="price">
-          <svg viewBox="0 0 32 32"><path d="M4 16C4 9.37258 9.37258 4 16 4C22.6274 4 28 9.37258 28 16C28 22.6274 22.6274 28 16 28C9.37258 28 4 22.6274 4 16Z" fill="#f4a261" stroke="#694e3e" stroke-width="2"/></svg>
-          ${currentCost}
-        </span>
-      `;
-
-      button.addEventListener("click", () => buyUpgrade(u.id));
-      upgradesContainer.appendChild(button);
-    });
-  }
-
-  function renderBadges() {
-    badgesContainer.innerHTML = "";
-    MILESTONES.forEach(m => {
-      const earned = gameState.weight >= m.min || gameState.unlockedBadges.includes(m.name);
-      const li = document.createElement("li");
-      li.className = `badge ${earned ? "earned" : ""}`;
-      li.innerHTML = `
-        ${getBadgeSvg(m.name)}
-        <strong>${m.name}</strong>
-        <small>${m.min} lbs</small>
-        <span class="badge-status">${earned ? "Unlocked" : "Locked"}</span>
-      `;
-      badgesContainer.appendChild(li);
-    });
-  }
-
-  function updateUI() {
-    weightEl.textContent = gameState.weight.toFixed(1);
-    slicesEl.textContent = Math.floor(gameState.weight);
-    rateEl.textContent = gameState.rate;
-    tapValueEl.textContent = `${gameState.tapValue} lb / tap`;
-
-    helperCountEl.textContent = gameState.helpersCount;
-    totalTapsEl.textContent = gameState.totalTaps;
-    totalSlicesEl.textContent = Math.floor(gameState.totalSlices);
-    helpersEl.textContent = gameState.helpersCount;
-
-    let currentMilestone = MILESTONES[0];
-    let nextMilestone = MILESTONES[1];
-
-    for (let i = 0; i < MILESTONES.length; i++) {
-      if (gameState.weight >= MILESTONES[i].min) {
-        currentMilestone = MILESTONES[i];
-        nextMilestone = MILESTONES[i + 1] || MILESTONES[i];
-      }
-    }
-
-    if (!gameState.unlockedBadges.includes(currentMilestone.name)) {
-      gameState.unlockedBadges.push(currentMilestone.name);
-    }
-
-    badgeCountEl.textContent = gameState.unlockedBadges.length;
-    categoryEls.forEach(el => el.textContent = currentMilestone.name);
-
-    let progressPercent = 100;
-    if (nextMilestone !== currentMilestone) {
-      const span = nextMilestone.min - currentMilestone.min;
-      const currentProgress = gameState.weight - currentMilestone.min;
-      progressPercent = Math.min(100, Math.max(0, (currentProgress / span) * 100));
-      nextLabelEls.forEach(el => el.textContent = `Next: ${nextMilestone.name} at ${nextMilestone.min} lbs`);
-    } else {
-      nextLabelEls.forEach(el => el.textContent = "Max milestone reached!");
-    }
-
-    progressEls.forEach(bar => {
-      bar.style.width = `${progressPercent}%`;
-      bar.parentElement.setAttribute("aria-valuenow", Math.round(progressPercent));
-    });
-
-    const pumpkinContainer = document.querySelector(".pumpkin-svg-container");
-    if (pumpkinContainer) {
-      // Smooth logarithmic scaling so it keeps growing indefinitely without capping out too early
-      const scaleFactor = Math.min(2.4, 0.6 + Math.log10(gameState.weight + 1) * 0.45);
-      pumpkinContainer.style.setProperty("--pumpkin-scale", scaleFactor);
-    }
-
-    renderUpgrades();
-    renderBadges();
-  }
-
-  function updateTickUI() {
-    weightEl.textContent = gameState.weight.toFixed(1);
-    slicesEl.textContent = Math.floor(gameState.weight);
-
-    const upgradeButtons = upgradesContainer.querySelectorAll(".upgrade");
-    UPGRADES_DATA.forEach((u, index) => {
-      const currentCost = Math.floor(u.cost * Math.pow(u.costMult, u.count));
-      const canAfford = gameState.weight >= currentCost;
-      if (upgradeButtons[index]) {
-        upgradeButtons[index].disabled = !canAfford;
-      }
-    });
-  }
-
-  function growPumpkin(amount, event) {
-    gameState.weight += amount;
-    gameState.totalSlices += amount;
-    gameState.totalTaps += 1;
-
-    createFloatingText(`+${amount.toFixed(1)} lb`, event);
-    updateUI();
-    saveGame();
-  }
-
-  function createFloatingText(text, event) {
-    if (!event) return;
-    const floater = document.createElement("span");
-    floater.className = "floater";
-    floater.textContent = text;
-
-    const rect = stageEl.getBoundingClientRect();
-    const x = (event.clientX || (event.touches && event.touches[0].clientX)) - rect.left;
-    const y = (event.clientY || (event.touches && event.touches[0].clientY)) - rect.top;
-
-    floater.style.left = `${x}px`;
-    floater.style.top = `${y}px`;
-    stageEl.appendChild(floater);
-
-    setTimeout(() => floater.remove(), 1000);
-  }
-
-  function buyUpgrade(id) {
-    const upgrade = UPGRADES_DATA.find(u => u.id === id);
-    if (!upgrade) return;
-
-    const currentCost = Math.floor(upgrade.cost * Math.pow(upgrade.costMult, upgrade.count));
-    if (gameState.weight >= currentCost) {
-      gameState.weight -= currentCost;
-      upgrade.count += 1;
-      gameState.upgrades[id] = upgrade.count;
-
-      recalculateStats();
-      updateUI();
-      saveGame();
-    }
-  }
-
-  growBtn.addEventListener("click", (e) => {
-    growPumpkin(gameState.tapValue, e);
-  });
-
-  resetBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to start a fresh patch? All progress will be reset.")) {
-      localStorage.removeItem(SAVE_KEY);
-      location.reload();
-    }
-  });
-
-  soundBtn.addEventListener("click", () => {
-    gameState.soundEnabled = !gameState.soundEnabled;
-    soundBtn.setAttribute("aria-pressed", gameState.soundEnabled);
-    soundBtn.textContent = gameState.soundEnabled ? "♫" : "♪";
-  });
-
-  const tabs = document.querySelectorAll(".tabs button");
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      const targetTab = tab.getAttribute("data-tab");
-      
-      tabs.forEach(t => {
-        t.classList.remove("active");
-        t.setAttribute("aria-selected", "false");
-      });
-      tab.classList.add("active");
-      tab.setAttribute("aria-selected", "true");
-
-      if (targetTab === "shop") {
-        document.getElementById("shop").hidden = false;
-        document.getElementById("stats").hidden = true;
-      } else {
-        document.getElementById("shop").hidden = true;
-        document.getElementById("stats").hidden = false;
-      }
-
-      if (window.innerWidth <= 800) {
-        asideEl.classList.add("sheet-open");
-      }
-    });
-  });
-
-  backBtn.addEventListener("click", () => {
-    asideEl.classList.remove("sheet-open");
-  });
-
-  let lastTime = performance.now();
-  function gameLoop(currentTime) {
-    const delta = (currentTime - lastTime) / 1000;
-    lastTime = currentTime;
-
-    if (gameState.rate > 0 && delta > 0 && delta < 1) {
-      const gained = gameState.rate * delta;
-      gameState.weight += gained;
-      gameState.totalSlices += gained;
-      updateTickUI();
-    }
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  loadGame();
-  updateUI();
-  requestAnimationFrame(gameLoop);
-</script>
-</body>
-</html>
+function render(){
+ if(S.kids.length===1&&ui.v==='home'){ui.v='kid';ui.k=S.kids[0].id}
+ const a=$('#app');
+ if(ui.v==='home')a.innerHTML=home();
+ else if(ui.v==='kid')a.innerHTML=kidView();
+ else a.innerHTML=parentView();
+ if(ui.modal==='pin')a.insertAdjacentHTML('beforeend',`<div class="modal"><div class="box"><h2>🔒 Parent PIN</h2><input id="pin" type="password" inputmode="numeric" autocomplete="off" style="font-size:28px;text-align:center;width:100%"><p id="pe" class="minus"></p><div class="row" style="justify-content:center"><button data-a="x">Cancel</button><button class="pri" data-a="unlock">Unlock</button></div></div></div>`),setTimeout(()=>{const p=$('#pin');p&&p.focus()},50);
+}
+function home(){return `<div class="top"><h1>⭐ Star Chores</h1><button data-a="pin">🔒 Parents</button></div><div class="homegrid">`+S.kids.map(k=>`<div class="kidcard" data-a="kid" data-k="${k.id}" style="--kc:${k.c};cursor:pointer"><div class="av">${k.e}</div><div class="nm">${esc(k.name)}</div><div class="bal">⭐ ${bal(k.id)}</div></div>`).join('')+`</div>`}
+function kidView(){
+ const k=kid(ui.k),b=bal(k.id);
+ let h=`<div class="bar" style="--kc:${k.c}">${S.kids.length>1?'<button data-a="home">⬅ Back</button>':'<button data-a="pin">🔒</button>'}<span class="av">${k.e}</span><span class="nm">${esc(k.name)}</span><span class="big">⭐ ${b}</span></div><div class="tiles">`;
+ for(const c of S.chores){
+  const dl=doneList(c,k.id),done=c.t!=='repeat'&&dl.length>0;
+  let badge='';
+  if(done)badge=`<span class="chk">✅</span>`;else if(c.t==='repeat'&&dl.length)badge=`<span class="cnt">×${dl.length}</span>`;
+  const who=done&&c.t==='shared'&&dl[0].k!==k.id?` ${kid(dl[0].k)?kid(dl[0].k).e:''}`:'';
+  h+=`<button class="tile${done?' done':''}" data-a="do" data-c="${c.id}" ${done?'disabled':''}>${badge}<span class="e">${c.e}</span><span class="t">${esc(c.n)}${who}</span><span class="s">${stars(c.s)}</span></button>`;
+ }
+ h+=`</div>`;
+ if(S.kids.length>1){const mx=Math.max(1,...S.kids.map(x=>bal(x.id)));h+=`<div class="panel goals"><h3>🏆 Star scoreboard</h3>`+S.kids.map(o=>{const t=S.log.filter(l=>l.k===o.id&&l.d===today()&&l.s>0).reduce((a,l)=>a+l.s,0);return `<div class="goal"><span style="font-size:40px">${o.e}</span><div style="flex:1"><b>${esc(o.name)}</b> <span class="mute">today +${t}</span><div class="p"><i style="width:${Math.max(3,bal(o.id)/mx*100)}%;background:${o.c}"></i></div></div><b style="font-size:26px">⭐ ${bal(o.id)}</b></div>`}).join('')+`</div>`;}
+ if(S.rewards.length){h+=`<div class="panel goals"><h3>🎁 My goals</h3>`+S.rewards.map(r=>`<div class="goal"><span style="font-size:36px">${r.e}</span><div style="flex:1"><b>${esc(r.n)}</b> <span class="mute">${Math.min(b,r.cost)}/${r.cost} ⭐</span><div class="p"><i style="width:${Math.max(0,Math.min(100,b/r.cost*100))}%"></i></div></div></div>`).join('')+`</div>`}
+ return h;
+}
+function parentView(){
+ let h=`<div class="top"><h1>🔒 Parent area</h1><button data-a="home">Lock &amp; exit</button></div><div class="tabs">`+[['pay','💰 Payouts'],['chores','🧹 Chores'],['rew','🎁 Rewards'],['set','⚙️ Settings']].map(t=>`<button data-a="tab" data-t="${t[0]}" class="${ui.tab===t[0]?'on':''}">${t[1]}</button>`).join('')+`</div>`;
+ if(ui.tab==='pay'){
+  for(const k of S.kids){const b=bal(k.id);
+   h+=`<div class="panel"><h2>${k.e} ${esc(k.name)}: ⭐ ${b} <span class="mute">(${money(b/S.set.rate)})</span></h2>
+   <div class="row"><b>Cash out</b><input type="number" id="co-${k.id}" min="1" placeholder="stars"><button class="pri" data-a="cash" data-k="${k.id}">Pay out</button><button data-a="cashall" data-k="${k.id}">All (${money(b/S.set.rate)})</button></div>
+   <div class="row"><b>Trade for</b>${S.rewards.map(r=>`<button data-a="redeem" data-k="${k.id}" data-r="${r.id}" ${b<r.cost?'disabled':''}>${r.e} ${esc(r.n)} (${r.cost}⭐)</button>`).join('')||'<span class="mute">No rewards yet</span>'}</div>
+   <div class="row"><b>Adjust</b><input type="number" id="bn-${k.id}" placeholder="+5 or -5"><button data-a="bonus" data-k="${k.id}">Apply</button></div></div>`}
+  h+=`<div class="panel"><h3>Recent activity</h3>`+(S.log.slice(-40).reverse().map(l=>{const c=S.chores.find(x=>x.id===l.c),kk=kid(l.k);return `<div class="hist"><span>${kk?kk.e:'?'}</span><span>${c?c.e+' '+esc(c.n):esc(l.note||'Adjustment')}<br><span class="mute">${l.d}</span></span><b class="${l.s>0?'plus':'minus'}">${l.s>0?'+':''}${l.s}</b><button data-a="undo" data-l="${l.id}" style="min-height:36px;padding:2px 10px">Undo</button></div>`}).join('')||'<span class="mute">Nothing yet.</span>')+`</div>`;
+ }
+ if(ui.tab==='chores'){
+  h+=`<div class="panel"><p class="mute">Once a day = can be done one time each day. Repeatable = unlimited (e.g. books).</p>`+S.chores.map((c,i)=>`<div class="row"><input class="em" data-f="chores.${i}.e" value="${esc(c.e)}"><input class="nm" data-f="chores.${i}.n" value="${esc(c.n)}"><input type="number" min="0" data-f="chores.${i}.s" value="${c.s}"><select data-f="chores.${i}.t">${[['each','Once a day'],['repeat','Repeatable']].map(o=>`<option value="${o[0]}" ${c.t===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><button class="dng" data-a="delc" data-i="${i}">✕</button></div>`).join('')+`<button class="pri" data-a="addc">+ Add chore</button></div>`;
+ }
+ if(ui.tab==='rew'){
+  h+=`<div class="panel">`+S.rewards.map((r,i)=>`<div class="row"><input class="em" data-f="rewards.${i}.e" value="${esc(r.e)}"><input class="nm" data-f="rewards.${i}.n" value="${esc(r.n)}"><input type="number" min="1" data-f="rewards.${i}.cost" value="${r.cost}"><span class="mute">stars</span><button class="dng" data-a="delr" data-i="${i}">✕</button></div>`).join('')+`<button class="pri" data-a="addr">+ Add reward</button></div>`;
+ }
+ if(ui.tab==='set'){
+  h+=`<div class="panel"><h3>Kids</h3>`+S.kids.map((k,i)=>`<div class="row"><input class="em" data-f="kids.${i}.e" value="${esc(k.e)}"><input class="nm" data-f="kids.${i}.name" value="${esc(k.name)}"><input type="color" data-f="kids.${i}.c" value="${k.c}" style="width:56px;padding:2px"></div>`).join('')+`</div>
+  <div class="panel"><h3>Cash &amp; PIN</h3><div class="row"><span>Stars per $1:</span><input type="number" min="1" data-f="set.rate" value="${S.set.rate}"></div><div class="row"><span>Parent PIN:</span><input data-f="set.pin" value="${esc(S.set.pin)}" inputmode="numeric"></div></div>
+  <div class="panel"><h3>Backup</h3><p class="mute">Data is saved in this browser on this tablet. Copy this text somewhere safe to back it up, or paste a backup here and tap Restore.</p><textarea id="bk">${esc(JSON.stringify(S))}</textarea><div class="row"><button data-a="restore">Restore from text</button><button class="dng" data-a="reset">Reset everything</button></div></div>`;
+ }
+ return h;
+}
+function setPath(p,v){const a=p.split('.');let o=S;for(let i=0;i<a.length-1;i++)o=o[a[i]];const l=a[a.length-1];o[l]=(typeof o[l]==='number')?(parseInt(v)||0):v}
+document.addEventListener('change',e=>{const f=e.target.dataset&&e.target.dataset.f;if(!f)return;setPath(f,e.target.value);save();if(/^set\.|^kids\./.test(f))render()});
+document.addEventListener('click',e=>{
+ const el=e.target.closest('[data-a]');if(!el)return;const d=el.dataset,a=d.a;
+ if(a==='kid'){ui.v='kid';ui.k=d.k}
+ else if(a==='home'){ui.v='home';ui.modal=null}
+ else if(a==='pin'){ui.modal='pin'}
+ else if(a==='x'){ui.modal=null}
+ else if(a==='unlock'){if($('#pin').value===S.set.pin){ui.modal=null;ui.v='parent'}else{$('#pe').textContent='Wrong PIN';return}}
+ else if(a==='do'){const c=S.chores.find(x=>x.id===d.c);if(c.t!=='repeat'&&doneList(c,ui.k).length)return;add(ui.k,c,c.s);const r=el.getBoundingClientRect();fly(r.left+r.width/2,r.top+30);toast('+'+c.s+' ⭐ Great job!')}
+ else if(a==='tab')ui.tab=d.t;
+ else if(a==='cash'||a==='cashall'){const b=bal(d.k);let n=a==='cashall'?b:parseInt($('#co-'+d.k).value);if(!n||n<1||n>b){toast('Check the amount');return}add(d.k,null,-n,'Cash '+money(n/S.set.rate));toast('Pay '+money(n/S.set.rate))}
+ else if(a==='redeem'){const r=S.rewards.find(x=>x.id===d.r);if(bal(d.k)<r.cost)return;add(d.k,null,-r.cost,r.e+' '+r.n);toast('Enjoy! '+r.e)}
+ else if(a==='bonus'){const n=parseInt($('#bn-'+d.k).value);if(!n)return;add(d.k,null,n,'Adjustment')}
+ else if(a==='undo'){S.log=S.log.filter(l=>l.id!==d.l);save()}
+ else if(a==='addc'){S.chores.push({id:'c'+uid(),e:'⭐',n:'New chore',s:1,t:'each'});save()}
+ else if(a==='delc'){if(confirm('Delete this chore?')){S.chores.splice(+d.i,1);save()}}
+ else if(a==='addr'){S.rewards.push({id:'r'+uid(),e:'🎁',n:'New reward',cost:50});save()}
+ else if(a==='delr'){S.rewards.splice(+d.i,1);save()}
+ else if(a==='restore'){try{const j=JSON.parse($('#bk').value);if(!j.kids||!j.chores)throw 0;S=j;save();toast('Restored')}catch(x){toast('Backup not valid')}}
+ else if(a==='reset'){if(confirm('Erase all chores, stars and history?')){S=JSON.parse(JSON.stringify(DEF));save();ui={v:'home',k:null,tab:'pay',modal:null}}}
+ render();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&ui.modal==='pin')document.querySelector('[data-a="unlock"]').click()});
+render();
+</script></body></html>
