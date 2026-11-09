@@ -45,7 +45,7 @@ textarea{width:100%;min-height:90px;font:13px monospace;background:var(--card);c
 </style></head><body><div id="app"></div>
 <script>
 const KEY='starchores.v1';
-const DEF={kids:[{id:'k1',name:'Big Kid',e:'🦊',c:'#3b82f6'},{id:'k2',name:'Little Kid',e:'🐼',c:'#d946ef'}],
+const DEF={kids:[{id:'k1',name:'My Stars',e:'🦊',c:'#3b82f6'}],
 chores:[
 ['🐕','Feed the dog (morning)',1,'shared'],['🌙','Feed the dog (evening)',1,'shared'],['🍽️','Empty the dishwasher',2,'shared'],['🥣','Put dishes in dishwasher',1,'shared'],['💩','Pick up dog poops',10,'shared'],
 ['🪥','Brush teeth (morning)',2,'each'],['🛏️','Brush teeth (evening)',2,'each'],['🧸','Tidy your room',3,'each'],['🧹','Clean the basement',5,'shared'],['🎒','Put lunch bag away',2,'each'],['📚','Read a book',1,'repeat'],['🧺','Help put laundry away',3,'shared'],['👟','Put shoes away',1,'each']
@@ -55,6 +55,7 @@ log:[],set:{pin:'1234',rate:10}};
 DEF.chores[6].e='🌛';
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||!S.kids)S=JSON.parse(JSON.stringify(DEF));
+S.chores.forEach(c=>{if(c.t==='shared')c.t='each'});
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 let ui={v:'home',k:null,tab:'pay',modal:null};
 const $=s=>document.querySelector(s);
@@ -71,6 +72,7 @@ function toast(t){const d=document.createElement('div');d.className='toast';d.te
 function fly(x,y){const d=document.createElement('div');d.className='fly';d.textContent='⭐';d.style.left=x-22+'px';d.style.top=y-22+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1000)}
 
 function render(){
+ if(S.kids.length===1&&ui.v==='home'){ui.v='kid';ui.k=S.kids[0].id}
  const a=$('#app');
  if(ui.v==='home')a.innerHTML=home();
  else if(ui.v==='kid')a.innerHTML=kidView();
@@ -80,7 +82,7 @@ function render(){
 function home(){return `<div class="top"><h1>⭐ Star Chores</h1><button data-a="pin">🔒 Parents</button></div><div class="homegrid">`+S.kids.map(k=>`<div class="kidcard" data-a="kid" data-k="${k.id}" style="--kc:${k.c};cursor:pointer"><div class="av">${k.e}</div><div class="nm">${esc(k.name)}</div><div class="bal">⭐ ${bal(k.id)}</div></div>`).join('')+`</div>`}
 function kidView(){
  const k=kid(ui.k),b=bal(k.id);
- let h=`<div class="bar" style="--kc:${k.c}"><button data-a="home">⬅ Back</button><span class="av">${k.e}</span><span class="nm">${esc(k.name)}</span><span class="big">⭐ ${b}</span></div><div class="tiles">`;
+ let h=`<div class="bar" style="--kc:${k.c}">${S.kids.length>1?'<button data-a="home">⬅ Back</button>':'<button data-a="pin">🔒</button>'}<span class="av">${k.e}</span><span class="nm">${esc(k.name)}</span><span class="big">⭐ ${b}</span></div><div class="tiles">`;
  for(const c of S.chores){
   const dl=doneList(c,k.id),done=c.t!=='repeat'&&dl.length>0;
   let badge='';
@@ -89,6 +91,7 @@ function kidView(){
   h+=`<button class="tile${done?' done':''}" data-a="do" data-c="${c.id}" ${done?'disabled':''}>${badge}<span class="e">${c.e}</span><span class="t">${esc(c.n)}${who}</span><span class="s">${stars(c.s)}</span></button>`;
  }
  h+=`</div>`;
+ if(S.kids.length>1){const mx=Math.max(1,...S.kids.map(x=>bal(x.id)));h+=`<div class="panel goals"><h3>🏆 Star scoreboard</h3>`+S.kids.map(o=>{const t=S.log.filter(l=>l.k===o.id&&l.d===today()&&l.s>0).reduce((a,l)=>a+l.s,0);return `<div class="goal"><span style="font-size:40px">${o.e}</span><div style="flex:1"><b>${esc(o.name)}</b> <span class="mute">today +${t}</span><div class="p"><i style="width:${Math.max(3,bal(o.id)/mx*100)}%;background:${o.c}"></i></div></div><b style="font-size:26px">⭐ ${bal(o.id)}</b></div>`}).join('')+`</div>`;}
  if(S.rewards.length){h+=`<div class="panel goals"><h3>🎁 My goals</h3>`+S.rewards.map(r=>`<div class="goal"><span style="font-size:36px">${r.e}</span><div style="flex:1"><b>${esc(r.n)}</b> <span class="mute">${Math.min(b,r.cost)}/${r.cost} ⭐</span><div class="p"><i style="width:${Math.max(0,Math.min(100,b/r.cost*100))}%"></i></div></div></div>`).join('')+`</div>`}
  return h;
 }
@@ -103,7 +106,7 @@ function parentView(){
   h+=`<div class="panel"><h3>Recent activity</h3>`+(S.log.slice(-40).reverse().map(l=>{const c=S.chores.find(x=>x.id===l.c),kk=kid(l.k);return `<div class="hist"><span>${kk?kk.e:'?'}</span><span>${c?c.e+' '+esc(c.n):esc(l.note||'Adjustment')}<br><span class="mute">${l.d}</span></span><b class="${l.s>0?'plus':'minus'}">${l.s>0?'+':''}${l.s}</b><button data-a="undo" data-l="${l.id}" style="min-height:36px;padding:2px 10px">Undo</button></div>`}).join('')||'<span class="mute">Nothing yet.</span>')+`</div>`;
  }
  if(ui.tab==='chores'){
-  h+=`<div class="panel"><p class="mute">Each kid = every child can earn it once a day. Shared = once a day, whoever does it first. Repeatable = unlimited (e.g. books).</p>`+S.chores.map((c,i)=>`<div class="row"><input class="em" data-f="chores.${i}.e" value="${esc(c.e)}"><input class="nm" data-f="chores.${i}.n" value="${esc(c.n)}"><input type="number" min="0" data-f="chores.${i}.s" value="${c.s}"><select data-f="chores.${i}.t">${[['each','Each kid daily'],['shared','Shared daily'],['repeat','Repeatable']].map(o=>`<option value="${o[0]}" ${c.t===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><button class="dng" data-a="delc" data-i="${i}">✕</button></div>`).join('')+`<button class="pri" data-a="addc">+ Add chore</button></div>`;
+  h+=`<div class="panel"><p class="mute">Once a day = can be done one time each day. Repeatable = unlimited (e.g. books).</p>`+S.chores.map((c,i)=>`<div class="row"><input class="em" data-f="chores.${i}.e" value="${esc(c.e)}"><input class="nm" data-f="chores.${i}.n" value="${esc(c.n)}"><input type="number" min="0" data-f="chores.${i}.s" value="${c.s}"><select data-f="chores.${i}.t">${[['each','Once a day'],['repeat','Repeatable']].map(o=>`<option value="${o[0]}" ${c.t===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select><button class="dng" data-a="delc" data-i="${i}">✕</button></div>`).join('')+`<button class="pri" data-a="addc">+ Add chore</button></div>`;
  }
  if(ui.tab==='rew'){
   h+=`<div class="panel">`+S.rewards.map((r,i)=>`<div class="row"><input class="em" data-f="rewards.${i}.e" value="${esc(r.e)}"><input class="nm" data-f="rewards.${i}.n" value="${esc(r.n)}"><input type="number" min="1" data-f="rewards.${i}.cost" value="${r.cost}"><span class="mute">stars</span><button class="dng" data-a="delr" data-i="${i}">✕</button></div>`).join('')+`<button class="pri" data-a="addr">+ Add reward</button></div>`;
