@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8"><script>window.CFG={f:'n4nnm3pj5bdd7b',k:''}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Star Chores</title>
 <style>
@@ -54,7 +54,7 @@ rewards:[{id:'r1',e:'🍦',n:'Ice cream trip',cost:40},{id:'r2',e:'🎬',n:'Movi
 log:[],set:{pin:'1234',rate:10}};
 DEF.chores[6].e='🌛';
 const DB='https://star-chart-2c98a-default-rtdb.firebaseio.com';
-const Q=new URLSearchParams(location.search),FAM=Q.get('f'),MYKID=Q.get('kid');
+const Q=new URLSearchParams(location.search),C=window.CFG||{},FAM=Q.get('f')||C.f,MYKID=Q.get('kid')||C.k;
 let S=null,online=true;
 
 
